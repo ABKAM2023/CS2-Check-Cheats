@@ -3,8 +3,11 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/ABKAM2023/CS2-Check-Cheats?style=for-the-badge)
 ![GitHub all releases](https://img.shields.io/github/downloads/ABKAM2023/CS2-Check-Cheats/total?style=for-the-badge)
 
+
 # CS2-Check-Cheats
 Check Cheats - создан для помощи администраторам в проверке подозрительных игроков на использование читов.
+
+**Видео-демонстрация - https://www.youtube.com/watch?v=Uokz0AnyfM4&ab_channel=ABKAM**
 
 # Установка
 1. Установите [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master) и [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp). Для работы бана [CS2 Admin System](https://csdevs.net/resources/cs2-admin-system.424/)
