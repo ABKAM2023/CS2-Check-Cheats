@@ -19,7 +19,7 @@ namespace CheckCheatsPlugin
 {
     public class CheckCheatsPlugin : BasePlugin
     {
-        public override string ModuleName => "CheckCheats";
+        public override string ModuleName => "CheckCheats by ABKAM";
         public override string ModuleVersion => "1.0";
         private Dictionary<CCSPlayerController, CSTimers.Timer> checkTimers = new Dictionary<CCSPlayerController, CSTimers.Timer>();
         private Dictionary<CCSPlayerController, (string message, bool continueUpdating)> playerCenterMessages = new Dictionary<CCSPlayerController, (string message, bool continueUpdating)>();
@@ -48,7 +48,6 @@ namespace CheckCheatsPlugin
         {
             var stringBuilder = new StringBuilder();
 
-            // Добавляем комментарии и значения конфигурации
             stringBuilder.AppendLine("# Конфигурационный файл для плагина CheckCheatsPlugin");
             
             stringBuilder.AppendLine("# Формат команды для бана игроков (mm_ban {0} время {1})");
@@ -94,7 +93,7 @@ namespace CheckCheatsPlugin
                 foreach (var kvp in playerCenterMessages)
                 {
                     var player = kvp.Key;
-                    var (message, _) = kvp.Value; // Ignore continueUpdating here, just get the message
+                    var (message, _) = kvp.Value;
                     if (player != null && player.IsValid)
                     {
                         player.PrintToCenterHtml(message);
@@ -124,7 +123,7 @@ namespace CheckCheatsPlugin
                 playerMessageTimers.Remove(playerToUncheck);
             }
 
-            isCheckActive[playerToUncheck] = false; // Marking check as inactive
+            isCheckActive[playerToUncheck] = false; 
 
             string successMessage = _config.SuccessMessage;
             playerCenterMessages[playerToUncheck] = (successMessage, true);
@@ -156,7 +155,6 @@ namespace CheckCheatsPlugin
             int totalTime = _config.CheckDuration;
             ShowCenterMessageWithCountdown(playerToCheck, totalTime);
 
-            // Установка таймера на 120 секунд
             var timer = AddTimer(totalTime, () =>
             {
                 BanPlayer(playerToCheck);
@@ -185,17 +183,16 @@ namespace CheckCheatsPlugin
                 message = ReplaceColorPlaceholders(message);
                 admin.PrintToChat(message);
             }
-            // Останавливаем таймер, если он активен, но оставляем сообщение на экране
             if (playerMessageTimers.TryGetValue(player, out var timer))
             {
                 timer.Kill();
                 playerMessageTimers.Remove(player);
-                isCheckActive[player] = false; // Отмечаем проверку как неактивную
+                isCheckActive[player] = false; 
             }
 
             if (playerCenterMessages.TryGetValue(player, out var messageInfo))
             {
-                playerCenterMessages[player] = (messageInfo.message, false); // Stop updating the message
+                playerCenterMessages[player] = (messageInfo.message, false); 
             }
 
         }
@@ -206,7 +203,6 @@ namespace CheckCheatsPlugin
         }
         private void ShowCenterMessageWithCountdown(CCSPlayerController player, int totalTime)
         {
-            // Stopping and removing existing timer, if it exists
             if (playerMessageTimers.TryGetValue(player, out var existingTimer))
             {
                 existingTimer.Kill();
@@ -216,13 +212,12 @@ namespace CheckCheatsPlugin
             int remainingTime = totalTime;
             isCheckActive[player] = true;
 
-            // Creating a new timer for countdown message updates
+
             CSTimers.Timer messageTimer = null;
             messageTimer = AddTimer(1, () =>
             {
                 if (!isCheckActive[player] || messageTimer == null)
                 {
-                    // Cleanup if check is not active or timer is null
                     if (messageTimer != null)
                     {
                         messageTimer.Kill();
@@ -234,7 +229,6 @@ namespace CheckCheatsPlugin
 
                 if (remainingTime <= 0)
                 {
-                    // Cleanup when countdown reaches zero
                     playerCenterMessages[player] = (playerCenterMessages[player].message, false);
                     isCheckActive[player] = false;
                     if (messageTimer != null)
@@ -274,9 +268,9 @@ namespace CheckCheatsPlugin
         }          
         public class PluginConfig
         {
-            public string BanCommand { get; set; } = "mm_ban {0} 0 {1}"; // Default command format
-            public string BanReason { get; set; } = "Cheating"; // Default ban reason
-            public int CheckDuration { get; set; } = 120; // Default duration in seconds
+            public string BanCommand { get; set; } = "mm_ban {0} 0 {1}";  
+            public string BanReason { get; set; } = "Cheating"; 
+            public int CheckDuration { get; set; } = 120; 
             public string CountdownMessageFormat { get; set; } = "<font color='red' class='fontSize-l'>Вы вызваны на проверку. Скиньте ваш дискорд. Оставшееся время: {remainingTime} сек. Напишите !contact ваш_дискорд.</font>";
             public string ErrorMessage { get; set; } = "[{Red}ADMIN{White}] Пожалуйста, укажите ваш дискорд. Используйте: {Green}!contact ваш_дискорд";
             public string AdminMessageFormat { get; set; } = "[{Red}ADMIN{White}] Игрок {Yellow}{PlayerName} {White}предоставил свой Дискорд: {Green}{DiscordContact}";
