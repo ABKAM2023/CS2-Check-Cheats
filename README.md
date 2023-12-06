@@ -5,8 +5,57 @@
 
 
 # CS2-Check-Cheats
-Check Cheats - создан для помощи администраторам в проверке подозрительных игроков на использование читов.
 
+# EN
+**Check Cheats** - is designed to assist administrators in checking suspicious players for the use of cheats.
+**Video demonstration - https://www.youtube.com/watch?v=ovRJaYlCYU8&ab_channel=ABKAM**
+
+# Installation
+1. Install [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master) and [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp). For the ban function, install [CS2 Admin System](https://github.com/Pisex/cs2-bans/tree/2.1.2)
+2. Download Check Cheats
+3. Unzip the archive and upload it to your game server
+
+# How to Access Commands?
+1. Open the directory "addons/counterstrikesharp/configs".
+2. Find the file "admins.json" in the specified folder.
+3. Inside the "admins.json" file, add the necessary flags to access the commands. For example:
+```
+"76561198847871713": {
+    "identity": "76561198847871713",
+    "flags": [
+        "@admin/check",
+        "@admin/uncheck"
+    ]
+}
+```
+After this, you will be granted access to the commands.
+
+# Main Config (Config.yml)
+```
+# Configuration file for the CheckCheatsPlugin plugin
+# Format of the command to ban players (mm_ban {0} time {1})
+BanCommand: "mm_ban {0} 0 {1}"
+# Reason for player ban
+BanReason: "Cheating"
+# Duration of player check in seconds
+CheckDuration: "120"
+# Format of the countdown message during player check
+CountdownMessageFormat: "<font color='red' class='fontSize-l'>You are called for a check. Please provide your Discord. Remaining time: {remainingTime} sec. Type !contact your_discord.</font>"
+# Error message when contact information is not provided correctly
+ErrorMessage: "[{Red}ADMIN{White}] Please provide your Discord. Use: {Green}!contact your_discord"
+# Message format for the administrator after the player provides contact information
+AdminMessageFormat: "[{Red}ADMIN{White}] Player {Yellow}{PlayerName} {White}has provided their Discord: {Green}{DiscordContact}"
+# Message displayed to the player after successfully passing the check
+SuccessMessage: "<font color='green' class='fontSize-l'>You have successfully passed the check.</font>"
+```
+
+# Commands
+- `!check` to inspect a player for cheats
+- `!uncheck` to stop inspecting a player
+- `!contact` to send Discord to the administrator
+
+# RU
+Check Cheats - создан для помощи администраторам в проверке подозрительных игроков на использование читов.
 **Видео-демонстрация - https://www.youtube.com/watch?v=Uokz0AnyfM4&ab_channel=ABKAM**
 
 # Установка
