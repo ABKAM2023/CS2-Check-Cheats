@@ -7,8 +7,8 @@
 # CS2-Check-Cheats
 
 # EN
-**Check Cheats** - is designed to assist administrators in checking suspicious players for the use of cheats.
-**Video demonstration - https://www.youtube.com/watch?v=ovRJaYlCYU8&ab_channel=ABKAM**
+- **Check Cheats** - is designed to assist administrators in checking suspicious players for the use of cheats.
+- **Video demonstration - https://www.youtube.com/watch?v=ovRJaYlCYU8&ab_channel=ABKAM**
 
 # Installation
 1. Install [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master) and [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp). For the ban function, install [CS2 Admin System](https://github.com/Pisex/cs2-bans/tree/2.1.2)
@@ -55,8 +55,8 @@ SuccessMessage: "<font color='green' class='fontSize-l'>You have successfully pa
 - `!contact` to send Discord to the administrator
 
 # RU
-Check Cheats - создан для помощи администраторам в проверке подозрительных игроков на использование читов.
-**Видео-демонстрация - https://www.youtube.com/watch?v=Uokz0AnyfM4&ab_channel=ABKAM**
+- Check Cheats - создан для помощи администраторам в проверке подозрительных игроков на использование читов.
+- **Видео-демонстрация - https://www.youtube.com/watch?v=Uokz0AnyfM4&ab_channel=ABKAM**
 
 # Установка
 1. Установите [Metamod:Source](https://www.sourcemm.net/downloads.php/?branch=master) и [CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp). Для работы бана [CS2 Admin System](https://csdevs.net/resources/cs2-admin-system.424/)
