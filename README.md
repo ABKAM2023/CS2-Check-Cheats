@@ -7,6 +7,8 @@
 # CS2-Check-Cheats
 
 # EN
+**To facilitate easier assistance, I have created a dedicated Discord server. You can join it using the following link: [https://discord.gg/yQm8edwV](https://discord.gg/saz3uGTfKR)**
+
 - **Check Cheats** - is designed to assist administrators in checking suspicious players for the use of cheats.
 - **Video demonstration - https://www.youtube.com/watch?v=ovRJaYlCYU8&ab_channel=ABKAM**
 
@@ -55,6 +57,8 @@ SuccessMessage: "<font color='green' class='fontSize-l'>You have successfully pa
 - `!contact` to send Discord to the administrator
 
 # RU
+**Для удобства и лучшей организации помощи я создал специальный сервер в Discord. Вы можете присоединиться к нему по следующей ссылке: [https://discord.gg/yQm8edwV](https://discord.gg/saz3uGTfKR)**
+
 - Check Cheats - создан для помощи администраторам в проверке подозрительных игроков на использование читов.
 - **Видео-демонстрация - https://www.youtube.com/watch?v=Uokz0AnyfM4&ab_channel=ABKAM**
 
