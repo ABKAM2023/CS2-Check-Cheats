@@ -19,8 +19,8 @@ namespace CheckCheatsPlugin
 {
     public class CheckCheatsPlugin : BasePlugin
     {
-        public override string ModuleName => "CheckCheats by ABKAM";
-        public override string ModuleVersion => "1.0";
+        public override string ModuleName => "[CheckCheats] by ABKAM";
+        public override string ModuleVersion => "1.0.1";
         private Dictionary<CCSPlayerController, CSTimers.Timer> checkTimers = new Dictionary<CCSPlayerController, CSTimers.Timer>();
         private Dictionary<CCSPlayerController, (string message, bool continueUpdating)> playerCenterMessages = new Dictionary<CCSPlayerController, (string message, bool continueUpdating)>();
         private Dictionary<CCSPlayerController, bool> isCheckActive = new Dictionary<CCSPlayerController, bool>();
@@ -34,23 +34,23 @@ namespace CheckCheatsPlugin
             if (!File.Exists(configFilePath))
             {
                 _config = new PluginConfig();
-                SaveConfig(_config, configFilePath);
+                SaveConfig(_config, configFilePath); 
             }
             else
             {
-                var deserializer = new DeserializerBuilder()
-                    .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                    .Build();
-                _config = deserializer.Deserialize<PluginConfig>(File.ReadAllText(configFilePath));
+                string yamlConfig = File.ReadAllText(configFilePath);
+                var deserializer = new DeserializerBuilder().Build();
+                _config = deserializer.Deserialize<PluginConfig>(yamlConfig) ?? new PluginConfig();
             }
         }
+
         private void SaveConfig(PluginConfig config, string filePath)
         {
             var stringBuilder = new StringBuilder();
 
-            stringBuilder.AppendLine("# Configuration file for the CheckCheatsPlugin plugin");
+            stringBuilder.AppendLine("# Configuration file for the CheckCheatsPlugin");
 
-            stringBuilder.AppendLine("# Format of the command to ban players (mm_ban {0} time {1})");
+            stringBuilder.AppendLine("# Command format for banning players (mm_ban {0} time {1})");
             AppendConfigValue(stringBuilder, nameof(config.BanCommand), config.BanCommand);
 
             stringBuilder.AppendLine("# Reason for player ban");
@@ -59,13 +59,13 @@ namespace CheckCheatsPlugin
             stringBuilder.AppendLine("# Duration of player check in seconds");
             AppendConfigValue(stringBuilder, nameof(config.CheckDuration), config.CheckDuration);
 
-            stringBuilder.AppendLine("# Format of the countdown message during player check");
+            stringBuilder.AppendLine("# Format of countdown message during player check");
             AppendConfigValue(stringBuilder, nameof(config.CountdownMessageFormat), config.CountdownMessageFormat);
 
             stringBuilder.AppendLine("# Error message when contact information is not provided correctly");
             AppendConfigValue(stringBuilder, nameof(config.ErrorMessage), config.ErrorMessage);
 
-            stringBuilder.AppendLine("# Message format for the administrator after the player provides contact information");
+            stringBuilder.AppendLine("# Message format for administrator after player provides contact information");
             AppendConfigValue(stringBuilder, nameof(config.AdminMessageFormat), config.AdminMessageFormat);
 
             stringBuilder.AppendLine("# Message displayed to the player after successfully passing the check");
@@ -101,8 +101,8 @@ namespace CheckCheatsPlugin
                 }
             });
             LoadConfig();
-        }
-        [RequiresPermissions("@admin/uncheck")]
+        }     
+        [RequiresPermissions("@admin/uncheck")]        
         private void AdminUncheckCommand(CCSPlayerController? caller, CommandInfo info)
         {
             if (caller == null) return;
@@ -117,8 +117,9 @@ namespace CheckCheatsPlugin
         }
         private void UncheckPlayer(CCSPlayerController playerToUncheck)
         {
-            if (playerMessageTimers.TryGetValue(playerToUncheck, out var timer))
+            if (playerMessageTimers.ContainsKey(playerToUncheck))
             {
+                var timer = playerMessageTimers[playerToUncheck];
                 timer.Kill();
                 playerMessageTimers.Remove(playerToUncheck);
             }
@@ -136,6 +137,7 @@ namespace CheckCheatsPlugin
             playerMessageTimers[playerToUncheck] = messageRemovalTimer;
         }
 
+
         [RequiresPermissions("@admin/check")]
         private void AdminCheckCommand(CCSPlayerController? caller, CommandInfo info)
         {
@@ -151,6 +153,8 @@ namespace CheckCheatsPlugin
         }
         private void CheckPlayer(CCSPlayerController playerToCheck, CCSPlayerController admin)
         {
+            playerToCheck.ChangeTeam(CsTeam.Spectator);
+
             adminInitiatingCheck[playerToCheck] = admin;
             int totalTime = _config.CheckDuration;
             ShowCenterMessageWithCountdown(playerToCheck, totalTime);
@@ -164,6 +168,8 @@ namespace CheckCheatsPlugin
 
             playerMessageTimers[playerToCheck] = timer;
         }
+
+
         private void PlayerContactCommand(CCSPlayerController player, CommandInfo info)
         {
             if (info.ArgCount < 2)
@@ -271,7 +277,7 @@ namespace CheckCheatsPlugin
             public string BanCommand { get; set; } = "mm_ban {0} 0 {1}";  
             public string BanReason { get; set; } = "Cheating"; 
             public int CheckDuration { get; set; } = 120; 
-            public string CountdownMessageFormat { get; set; } = "<font color='red' class='fontSize-l'>You are called for a check. Please provide your Discord. Remaining time: {remainingTime} sec. Type !contact your_discord.</font>";
+            public string CountdownMessageFormat { get; set; } = "<font color='red' class='fontSize-l'>You have been called for a check. Please provide your Discord. Remaining time: {remainingTime} sec. Type !contact your_discord.</font>";
             public string ErrorMessage { get; set; } = "[{Red}ADMIN{White}] Please provide your Discord. Use: {Green}!contact your_discord";
             public string AdminMessageFormat { get; set; } = "[{Red}ADMIN{White}] Player {Yellow}{PlayerName} {White}has provided their Discord: {Green}{DiscordContact}";
             public string SuccessMessage { get; set; } = "<font color='green' class='fontSize-l'>You have successfully passed the check.</font>";
