@@ -34,27 +34,31 @@ After this, you will be granted access to the commands.
 
 # Main Config (Config.yml)
 ```
-# Configuration file for the CheckCheatsPlugin plugin
-# Format of the command to ban players (mm_ban {0} time {1})
-BanCommand: "mm_ban {0} 0 {1}"
+# Configuration file for CheckCheatsPlugin
+# Command format for banning players (mm_ban {0} time {1})
+BanCommand: "bansteam {0} 525600"
 # Reason for player ban
 BanReason: "Cheating"
 # Duration of player check in seconds
 CheckDuration: "120"
-# Format of the countdown message during player check
-CountdownMessageFormat: "<font color='red' class='fontSize-l'>You are called for a check. Please provide your Discord. Remaining time: {remainingTime} sec. Type !contact your_discord.</font>"
+# Countdown message format during player check
+CountdownMessageFormat: "<font color='red' class='fontSize-l'>You have been called for a check. Send your discord. Remaining time: {remainingTime} sec. Type !contact your_discord.</font>"
 # Error message when contact information is not provided correctly
-ErrorMessage: "[{Red}ADMIN{White}] Please provide your Discord. Use: {Green}!contact your_discord"
+ErrorMessage: "[{Red}ADMIN{White}] Please specify your discord. Use: {Green}!contact your_discord"
 # Message format for the administrator after the player provides contact information
 AdminMessageFormat: "[{Red}ADMIN{White}] Player {Yellow}{PlayerName} {White}has provided their Discord: {Green}{DiscordContact}"
 # Message displayed to the player after successfully passing the check
 SuccessMessage: "<font color='green' class='fontSize-l'>You have successfully passed the check.</font>"
+# Enable sending logs to Discord
+EnableDiscordLogging: "True"
+# URL for Discord Webhook to send notifications
+DiscordWebhookUrl: "https://discord.com/api/webhooks/222211399650644/DDDDaaakkkkk_pDDDsxxxxkkx"
 ```
 
 # Commands
 - `!check` to inspect a player for cheats
 - `!uncheck` to stop inspecting a player
-- `!contact` to send Discord to the administrator
+- `css_checkreload` reloads the configuration file Config.yml
 
 # RU
 **Для удобства и лучшей организации помощи я создал специальный сервер в Discord. Вы можете присоединиться к нему по следующей ссылке: [https://discord.gg/yQm8edwV](https://discord.gg/saz3uGTfKR)**
@@ -86,7 +90,7 @@ SuccessMessage: "<font color='green' class='fontSize-l'>You have successfully pa
 ```
 # Конфигурационный файл для плагина CheckCheatsPlugin
 # Формат команды для бана игроков (mm_ban {0} время {1})
-BanCommand: "mm_ban {0} 0 {1}"
+BanCommand: "bansteam {0} 525600"
 # Причина бана игрока
 BanReason: "Cheating"
 # Продолжительность проверки игрока в секундах
@@ -99,9 +103,14 @@ ErrorMessage: "[{Red}ADMIN{White}] Пожалуйста, укажите ваш �
 AdminMessageFormat: "[{Red}ADMIN{White}] Игрок {Yellow}{PlayerName} {White}предоставил свой Дискорд: {Green}{DiscordContact}"
 # Сообщение, отображаемое игроку после успешного прохождения проверки
 SuccessMessage: "<font color='green' class='fontSize-l'>Вы успешно прошли проверку.</font>"
+# Включить отправку логов в Discord
+EnableDiscordLogging: "True"
+# URL Discord Webhook для отправки уведомлений
+DiscordWebhookUrl: "https://discord.com/api/webhooks/222211399650644/DDDDaaakkkkk_pDDDsxxxxkkx"
 ```
 
 # Команды
 - `!check` проверить игрока на читы
 - `!uncheck` прекратить проверку игрока
 - `!contact` отправить дискорд администратору
+- ­`css_checkreload` перезагружает конфигурационный файл Config.yml
