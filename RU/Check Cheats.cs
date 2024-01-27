@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
+using System.Net.Http;
 using System.Reflection;
 using CSTimers = CounterStrikeSharp.API.Modules.Timers;
 using CounterStrikeSharp.API;
@@ -20,12 +23,13 @@ namespace CheckCheatsPlugin
     public class CheckCheatsPlugin : BasePlugin
     {
         public override string ModuleName => "[CheckCheats] by ABKAM";
-        public override string ModuleVersion => "1.0.1";
+        public override string ModuleVersion => "1.0.2";
         private Dictionary<CCSPlayerController, CSTimers.Timer> checkTimers = new Dictionary<CCSPlayerController, CSTimers.Timer>();
         private Dictionary<CCSPlayerController, (string message, bool continueUpdating)> playerCenterMessages = new Dictionary<CCSPlayerController, (string message, bool continueUpdating)>();
         private Dictionary<CCSPlayerController, bool> isCheckActive = new Dictionary<CCSPlayerController, bool>();
         private Dictionary<CCSPlayerController, CSTimers.Timer> playerMessageTimers = new Dictionary<CCSPlayerController, CSTimers.Timer>();
         private Dictionary<CCSPlayerController, CCSPlayerController> adminInitiatingCheck = new Dictionary<CCSPlayerController, CCSPlayerController>(); 
+        private static readonly HttpClient _httpClient = new HttpClient();
         private PluginConfig _config;
 
         private void LoadConfig()
@@ -43,7 +47,6 @@ namespace CheckCheatsPlugin
                 _config = deserializer.Deserialize<PluginConfig>(yamlConfig) ?? new PluginConfig();
             }
         }
-
         private void SaveConfig(PluginConfig config, string filePath)
         {
             var stringBuilder = new StringBuilder();
@@ -70,6 +73,13 @@ namespace CheckCheatsPlugin
 
             stringBuilder.AppendLine("# Сообщение, отображаемое игроку после успешного прохождения проверки");
             AppendConfigValue(stringBuilder, nameof(config.SuccessMessage), config.SuccessMessage);
+            
+            stringBuilder.AppendLine("# Включить отправку логов в Discord");
+            AppendConfigValue(stringBuilder, nameof(config.EnableDiscordLogging), config.EnableDiscordLogging);
+            
+            stringBuilder.AppendLine("# URL Discord Webhook для отправки уведомлений");
+            AppendConfigValue(stringBuilder, nameof(config.DiscordWebhookUrl), config.DiscordWebhookUrl);
+
 
             File.WriteAllText(filePath, stringBuilder.ToString());
         }    
@@ -78,6 +88,39 @@ namespace CheckCheatsPlugin
             var valueStr = value?.ToString() ?? string.Empty;
             stringBuilder.AppendLine($"{key}: \"{EscapeMessage(valueStr)}\"");
         }
+        private async Task SendDiscordWebhookNotification(string webhookUrl, string playerName, string adminName, string playerSteamId64, string adminSteamId64)
+        {
+            var embed = new
+            {
+                title = $"Админ {adminName} вызвал игрока {playerName} на проверку",
+                color = 16777215, 
+                fields = new[]
+                {
+                    new
+                    {
+                        name = "Игрок",
+                        value = $"[{playerName}]({await GetSteamProfileLinkAsync(playerSteamId64)})",
+                        inline = true
+                    },
+                    new
+                    {
+                        name = "Админ",
+                        value = $"[{adminName}]({await GetSteamProfileLinkAsync(adminSteamId64)})",
+                        inline = true
+                    }
+                }
+            };
+            var payload = new { embeds = new[] { embed } };
+            var jsonPayload = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+
+            await _httpClient.PostAsync(webhookUrl, content);
+        }
+        static async Task<string> GetSteamProfileLinkAsync(string userId)
+        {
+            return await Task.FromResult($"https://steamcommunity.com/profiles/{userId}");
+        }
+
 
         private string EscapeMessage(string message)
         {
@@ -85,9 +128,11 @@ namespace CheckCheatsPlugin
         }           
         public override void Load(bool hotReload)
         {
-            AddCommand("check", "Check a player for cheats", AdminCheckCommand);
-            AddCommand("contact", "Send contact information", PlayerContactCommand);
-            AddCommand("uncheck", "Stop checking a player", AdminUncheckCommand);
+            AddCommand("css_check", "Check a player for cheats", AdminCheckCommand);
+            AddCommand("css_contact", "Send contact information", PlayerContactCommand);
+            AddCommand("css_uncheck", "Stop checking a player", AdminUncheckCommand);
+			AddCommand("css_checkreload", "Reload config config.yml", ReloadConfigCommand);
+            RegisterEventHandler<EventPlayerDisconnect>(OnPlayerDisconnect);
             RegisterListener<Listeners.OnTick>(() =>
             {
                 foreach (var kvp in playerCenterMessages)
@@ -113,7 +158,7 @@ namespace CheckCheatsPlugin
                 string playerName = player.PlayerName;
                 playerSelectMenu.AddMenuOption(playerName, (admin, option) => UncheckPlayer(player));
             }
-            ChatMenus.OpenMenu(caller, playerSelectMenu);
+            MenuManager.OpenChatMenu(caller, playerSelectMenu); 
         }
         private void UncheckPlayer(CCSPlayerController playerToUncheck)
         {
@@ -136,8 +181,6 @@ namespace CheckCheatsPlugin
 
             playerMessageTimers[playerToUncheck] = messageRemovalTimer;
         }
-
-
         [RequiresPermissions("@admin/check")]
         private void AdminCheckCommand(CCSPlayerController? caller, CommandInfo info)
         {
@@ -147,31 +190,62 @@ namespace CheckCheatsPlugin
             foreach (var player in Utilities.GetPlayers())
             {
                 string playerName = player.PlayerName;
-                playerSelectMenu.AddMenuOption(playerName, (admin, option) => CheckPlayer(player, admin));
+                playerSelectMenu.AddMenuOption(playerName, async (admin, option) => await CheckPlayer(player, admin));
             }
-            ChatMenus.OpenMenu(caller, playerSelectMenu);
+            MenuManager.OpenChatMenu(caller, playerSelectMenu);
         }
-        private void CheckPlayer(CCSPlayerController playerToCheck, CCSPlayerController admin)
+        private HookResult OnPlayerDisconnect(EventPlayerDisconnect disconnectEvent, GameEventInfo info)
+        {
+            if (disconnectEvent?.Userid != null && !disconnectEvent.Userid.IsBot)
+            {
+                if (isCheckActive.ContainsKey(disconnectEvent.Userid))
+                {
+                    BanPlayer(disconnectEvent.Userid);
+                }
+                
+                isCheckActive.Remove(disconnectEvent.Userid);
+            }
+
+            return HookResult.Continue;
+        }
+        
+        private async Task CheckPlayer(CCSPlayerController playerToCheck, CCSPlayerController admin)
         {
             playerToCheck.ChangeTeam(CsTeam.Spectator);
-
             adminInitiatingCheck[playerToCheck] = admin;
             int totalTime = _config.CheckDuration;
             ShowCenterMessageWithCountdown(playerToCheck, totalTime);
 
             var timer = AddTimer(totalTime, () =>
             {
+                if (playerToCheck == null || !playerToCheck.IsValid)
+                {
+                    Console.WriteLine("Player is not valid or null. Exiting timer callback.");
+                    return;
+                } 
+                
                 BanPlayer(playerToCheck);
                 playerCenterMessages.Remove(playerToCheck);
                 playerMessageTimers.Remove(playerToCheck);
             });
 
             playerMessageTimers[playerToCheck] = timer;
+            if (_config.EnableDiscordLogging && !string.IsNullOrEmpty(_config.DiscordWebhookUrl))
+            {
+                var playerSteamId64 = playerToCheck.AuthorizedSteamID?.SteamId64.ToString();
+                var adminSteamId64 = admin.AuthorizedSteamID?.SteamId64.ToString();
+
+                if (!string.IsNullOrEmpty(playerSteamId64) && !string.IsNullOrEmpty(adminSteamId64))
+                {
+                    await SendDiscordWebhookNotification(_config.DiscordWebhookUrl, playerToCheck.PlayerName,
+                        admin.PlayerName, playerSteamId64, adminSteamId64);
+                }
+            }
         }
-
-
-        private void PlayerContactCommand(CCSPlayerController player, CommandInfo info)
+        private void PlayerContactCommand(CCSPlayerController? player, CommandInfo info)
         {
+			if (player == null) return;
+
             if (info.ArgCount < 2)
             {
                 string errorMessage = ReplaceColorPlaceholders(_config.ErrorMessage);
@@ -218,10 +292,13 @@ namespace CheckCheatsPlugin
             int remainingTime = totalTime;
             isCheckActive[player] = true;
 
-
-            CSTimers.Timer messageTimer = null;
+            CSTimers.Timer? messageTimer = null; 
             messageTimer = AddTimer(1, () =>
             {
+                if (!isCheckActive.ContainsKey(player) || !playerMessageTimers.ContainsKey(player))
+                {
+                    return;
+                }
                 if (!isCheckActive[player] || messageTimer == null)
                 {
                     if (messageTimer != null)
@@ -254,6 +331,26 @@ namespace CheckCheatsPlugin
 
             playerMessageTimers[player] = messageTimer;
         }
+        [CommandHelper(minArgs: 0, usage: "Перезагружает конфигурационный файл Config.yml", whoCanExecute: CommandUsage.SERVER_ONLY)]
+        public void ReloadConfigCommand(CCSPlayerController? player, CommandInfo command)
+        {
+            if (player == null)
+            {
+                try
+                {
+                    LoadConfig();
+                    Console.WriteLine("[CheckCheatsPlugin] Конфигурация успешно перезагружена.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[CheckCheatsPlugin] Ошибка при перезагрузке конфигурации: {ex.Message}");
+                }
+            }
+            else
+            {
+                player.PrintToChat("Эта команда доступна только из консоли сервера.");
+            }
+        }
         private string ReplaceColorPlaceholders(string message)
         {
             if (message.Contains('{'))
@@ -281,9 +378,8 @@ namespace CheckCheatsPlugin
             public string ErrorMessage { get; set; } = "[{Red}ADMIN{White}] Пожалуйста, укажите ваш дискорд. Используйте: {Green}!contact ваш_дискорд";
             public string AdminMessageFormat { get; set; } = "[{Red}ADMIN{White}] Игрок {Yellow}{PlayerName} {White}предоставил свой Дискорд: {Green}{DiscordContact}";
             public string SuccessMessage { get; set; } = "<font color='green' class='fontSize-l'>Вы успешно прошли проверку.</font>";
-
-
-
+            public bool EnableDiscordLogging { get; set; } = true;
+            public string DiscordWebhookUrl { get; set; } = "";
         }
     }
 }
