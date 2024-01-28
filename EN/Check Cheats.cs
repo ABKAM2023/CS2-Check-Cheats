@@ -23,7 +23,7 @@ namespace CheckCheatsPlugin
     public class CheckCheatsPlugin : BasePlugin
     {
         public override string ModuleName => "[CheckCheats] by ABKAM";
-        public override string ModuleVersion => "1.0.2";
+        public override string ModuleVersion => "1.0.3";
         private Dictionary<CCSPlayerController, CSTimers.Timer> checkTimers = new Dictionary<CCSPlayerController, CSTimers.Timer>();
         private Dictionary<CCSPlayerController, (string message, bool continueUpdating)> playerCenterMessages = new Dictionary<CCSPlayerController, (string message, bool continueUpdating)>();
         private Dictionary<CCSPlayerController, bool> isCheckActive = new Dictionary<CCSPlayerController, bool>();
@@ -198,12 +198,12 @@ namespace CheckCheatsPlugin
         {
             if (disconnectEvent?.Userid != null && !disconnectEvent.Userid.IsBot)
             {
-                if (isCheckActive.ContainsKey(disconnectEvent.Userid))
+                if (isCheckActive.TryGetValue(disconnectEvent.Userid, out var isActive) && isActive)
                 {
                     BanPlayer(disconnectEvent.Userid);
                 }
-
-                isCheckActive.Remove(disconnectEvent.Userid);
+        
+                isCheckActive.Remove(disconnectEvent.Userid); 
             }
 
             return HookResult.Continue;
